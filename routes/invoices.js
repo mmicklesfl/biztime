@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-// PostgreSQL pool setup for database connection rather than using db variable, as suggested by mentor Sean
+// PostgreSQL pool setup for database connection as suggested by mentor Sean
 const pool = require('../db');
 
 // GET all invoices - List basic info about all invoices

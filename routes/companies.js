@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router(); 
 
-// PostgreSQL pool for database connection rather than using db variable, as suggested by mentor Sean
+// PostgreSQL pool for database connection as suggested by mentor Sean
 const pool = require('../db');
 
 // Route to get a list of all companies
