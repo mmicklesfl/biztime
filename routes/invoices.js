@@ -72,27 +72,47 @@ router.post('/', async (req, res, next) => {
 // PUT to update an existing invoice - Modify details of an invoice
 router.put('/:id', async (req, res, next) => {
     try {
-        // Extract invoice ID from the request params and new amount from the request body
+        // Extract invoice ID from the request params and new amount and paid status from the request body
         const { id } = req.params;
-        const { amt } = req.body;
-        // Update specified invoice in the database and return its updated details
-        const result = await pool.query(
-            'UPDATE invoices SET amt = $1 WHERE id = $2 RETURNING id, comp_code, amt, paid, add_date, paid_date', 
-            [amt, id]
+        const { amt, paid } = req.body;
+        
+        // Fetch the current invoice details
+        const fetchResult = await pool.query(
+            'SELECT * FROM invoices WHERE id = $1', 
+            [id]
         );
 
         // If no invoice is found, return a 404
-        if (result.rows.length === 0) {
+        if (fetchResult.rows.length === 0) {
             return res.status(404).json({ error: 'Invoice not found' });
         }
 
+        // Get the current paid status and paid date
+        const currentPaid = fetchResult.rows[0].paid;
+        const currentPaidDate = fetchResult.rows[0].paid_date;
+
+        // Set the new paid status and paid date based on the request body
+        let newPaidDate = currentPaidDate;
+        if (paid && !currentPaid) {
+            newPaidDate = new Date().toISOString().split('T')[0]; // Set to today's date if paying an unpaid invoice
+        } else if (!paid && currentPaid) {
+            newPaidDate = null; // Set to null if un-paying an invoice
+        }
+
+        // Update the invoice in the database with the new amount and paid status
+        const updateResult = await pool.query(
+            'UPDATE invoices SET amt = $1, paid = $2, paid_date = $3 WHERE id = $4 RETURNING id, comp_code, amt, paid, add_date, paid_date', 
+            [amt, paid, newPaidDate, id]
+        );
+
         // Send updated invoice details back to the client
-        res.json({ invoice: result.rows[0] });
+        res.json({ invoice: updateResult.rows[0] });
     } catch (err) {
         // Handle errors
         return next(err);
     }
 });
+
 
 // DELETE an invoice - Remove an invoice from the database
 router.delete('/:id', async (req, res, next) => {
