@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router(); 
+const slugify = require('slugify');
 
-// PostgreSQL pool for database connection as suggested by mentor Sean
+// PostgreSQL pool for database connection
 const pool = require('../db');
 
 // Route to get a list of all companies
@@ -61,16 +62,21 @@ router.get('/:code', async (req, res) => {
 // Route to add a new company
 router.post('/', async (req, res) => {
     try {
-        console.log("Request body:", req.body); // Logging request body
-        const { code, name, description } = req.body;
+        // Correctly extract name and description from the request body
+        const { name, description } = req.body;
+        // Use slugify to generate a code based on the company name
+        const code = slugify(name, { lower: true, strict: true });
         
+        // Execute the SQL query to insert the new company into the database
         const result = await pool.query(
             'INSERT INTO companies (code, name, description) VALUES ($1, $2, $3) RETURNING *',
             [code, name, description]
         );
-        res.status(201).json({ company: result.rows[0] });  // Set status to 201 Created and sends new company details back to the client
+        
+        // Respond with the newly created company details
+        res.status(201).json({ company: result.rows[0] });
     } catch (err) {
-        console.error("Error in POST /companies route:", err); // Logging the complete error for debugging purposes
+        console.error("Error in POST /companies route:", err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -80,8 +86,10 @@ router.put('/:code', async (req, res) => {
     try {
         const { code } = req.params; // Extract company code from URL parameters
         const { name, description } = req.body; // Extract updated details from request body
-        // Update company details in the database
-        const result = await pool.query('UPDATE companies SET name = $1, description = $2 WHERE code = $3 RETURNING *', [name, description, code]);
+        // Slugify the updated name to ensure consistency in company code
+        const updatedCode = slugify(name, { lower: true, strict: true });
+        // Update company details in the database with the slugified name
+        const result = await pool.query('UPDATE companies SET name = $1, description = $2, code = $3 WHERE code = $4 RETURNING *', [name, description, updatedCode, code]);
 
         // If no company found, return a 404
         if (result.rows.length === 0) {
