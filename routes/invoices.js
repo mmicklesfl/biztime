@@ -58,17 +58,13 @@ router.get('/:id', async (req, res, next) => {
 // POST a new invoice - Add an invoice to the database
 router.post('/', async (req, res, next) => {
     try {
-        // Extract company code and amount from request body
         const { comp_code, amt } = req.body;
-        // Insert new invoice into the database and return its details
         const result = await pool.query(
             'INSERT INTO invoices (comp_code, amt) VALUES ($1, $2) RETURNING id, comp_code, amt, paid, add_date, paid_date', 
             [comp_code, amt]
         );
-        // Send new invoice details back to the client
-        res.json({ invoice: result.rows[0] });
+        res.status(201).json({ invoice: result.rows[0] }); // Set status to 201 Created and sends new invoice details back to the client
     } catch (err) {
-        // Handle errors
         return next(err);
     }
 });

@@ -61,14 +61,16 @@ router.get('/:code', async (req, res) => {
 // Route to add a new company
 router.post('/', async (req, res) => {
     try {
-        // Extract company details from request body
+        console.log("Request body:", req.body); // Logging request body
         const { code, name, description } = req.body;
-        // Insert new company into the database
-        const result = await pool.query('INSERT INTO companies (code, name, description) VALUES ($1, $2, $3) RETURNING *', [code, name, description]);
-        // Respond with the newly added company's details
-        res.json({ company: result.rows[0] });
+        
+        const result = await pool.query(
+            'INSERT INTO companies (code, name, description) VALUES ($1, $2, $3) RETURNING *',
+            [code, name, description]
+        );
+        res.status(201).json({ company: result.rows[0] });  // Set status to 201 Created and sends new company details back to the client
     } catch (err) {
-        // Handle errors
+        console.error("Error in POST /companies route:", err); // Logging the complete error for debugging purposes
         res.status(500).json({ error: err.message });
     }
 });

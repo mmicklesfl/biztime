@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "jest --coverage",
+    "test": "BIZTIME_DB_PASSWORD=0428 jest",
+    "test:coverage": "jest --coverage",
     "start": "node server.js"
   },
   "keywords": [],
@@ -19,10 +20,12 @@
     "supertest": "^6.3.4"
   },
   "jest": {
-  "testEnvironment": "node",
-  "collectCoverage": true,
-  "coverageDirectory": "coverage",
-  "coverageReporters": ["text", "lcov"]
-}
-
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov"
+    ]
+  }
 }
