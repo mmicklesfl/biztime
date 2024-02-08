@@ -36,7 +36,16 @@ router.get('/:code', async (req, res) => {
             [code]
         );
 
-        // Construct the company object including nested invoices information
+        // NEW: Fetch related industries for company
+        const indResult = await pool.query(
+            `SELECT i.industry
+             FROM industries i
+             JOIN company_industries ci ON i.code = ci.industry_code
+             WHERE ci.company_code = $1`,
+            [code]
+        );
+
+        // Construct the company object including nested invoices information and now industries
         const company = {
             code: compResult.rows[0].code,
             name: compResult.rows[0].name,
@@ -48,7 +57,8 @@ router.get('/:code', async (req, res) => {
                 paid: inv.paid,
                 add_date: inv.add_date,
                 paid_date: inv.paid_date
-            }))
+            })),
+            industries: indResult.rows.map(ind => ind.industry) // Add industries to the company object
         };
 
         // Respond with detailed company information
@@ -58,6 +68,7 @@ router.get('/:code', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 
 // Route to add a new company
 router.post('/', async (req, res) => {
